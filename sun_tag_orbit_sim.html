@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sun-Tag Orbit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --space: #0b101e;
+            --earth: #4da6ff;
+            --moon: #d1d1d1;
+            --rope: rgba(255, 255, 255, 0.4);
+            --danger: #ff5252;
+            --safe: #4caf50;
+        }
+        body {
+            margin: 0;
+            background: var(--space);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas { width: 100vw; height: 100vh; }
+        #ui {
+            position: absolute;
+            bottom: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+        button.action {
+            padding: 18px 30px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .cut { background: var(--danger); color: white; }
+        .reset { background: var(--safe); color: white; }
+        button.action:active { transform: scale(0.95); }
+        #label {
+            position: absolute;
+            top: 40px;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #why-though-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: 'Walter Turncoat', cursive;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #f8e5b4;
+            border: 3px solid #5a4b3c;
+            border-radius: 10px;
+            color: #5a4b3c;
+            padding: 10px 20px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 60;
+            transition: transform 0.2s, opacity 0.5s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #why-though-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #why-though-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="label">
+        <h1 id="statusText">Gravity is ON</h1>
+        <p id="subText">The "Rope" keeps the Moon in a circle!</p>
+    </div>
+
+    <canvas id="orbitSim"></canvas>
+
+    <div id="ui">
+        <button id="actionBtn" class="action cut">Cut the Rope!</button>
+    </div>
+
+    <button id="why-though-btn">Why though?</button>
+
+<script>
+    const canvas = document.getElementById('orbitSim');
+    const ctx = canvas.getContext('2d');
+    const actionBtn = document.getElementById('actionBtn');
+    const statusText = document.getElementById('statusText');
+    const subText = document.getElementById('subText');
+    const whyBtn = document.getElementById('why-though-btn');
+
+    let width, height, centerX, centerY;
+    let isTethered = true;
+    
+    // Moon Properties
+    const orbitRadius = 150;
+    let angle = 0;
+    const speed = 0.01;
+    
+    let moon = { x: 0, y: 0, vx: 0, vy: 0, radius: 15 };
+
+    function init() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        centerX = width / 2;
+        centerY = height / 2;
+    }
+
+    function update() {
+        if (isTethered) {
+            // Circle Math
+            angle += speed;
+            moon.x = centerX + Math.cos(angle) * orbitRadius;
+            moon.y = centerY + Math.sin(angle) * orbitRadius;
+            
+            // Calculate tangent velocity for when we cut the rope
+            moon.vx = -Math.sin(angle) * (speed * orbitRadius);
+            moon.vy = Math.cos(angle) * (speed * orbitRadius);
+        } else {
+            // Straight line math (Inertia)
+            moon.x += moon.vx;
+            moon.y += moon.vy;
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = "#0b101e";
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Stars
+        ctx.fillStyle = "white";
+        for(let i=0; i<50; i++) {
+            ctx.beginPath();
+            ctx.arc((i * 137) % width, (i * 253) % height, 1, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        // Draw Gravity Rope (if tethered)
+        if (isTethered) {
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(moon.x, moon.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Draw Earth
+        ctx.fillStyle = "#4da6ff"; // Blue
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+        ctx.fill();
+        // Earth Detail (Green dot for land)
+        ctx.fillStyle = "#81c784";
+        ctx.beginPath();
+        ctx.arc(centerX - 10, centerY - 5, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Moon
+        ctx.fillStyle = "#d1d1d1";
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, moon.radius, 0, Math.PI * 2);
+        ctx.fill();
+        // Craters
+        ctx.fillStyle = "#a9a9a9";
+        ctx.beginPath();
+        ctx.arc(moon.x - 4, moon.y - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        requestAnimationFrame(() => {
+            update();
+            draw();
+        });
+    }
+
+    actionBtn.addEventListener('click', () => {
+        if (isTethered) {
+            isTethered = false;
+            actionBtn.innerText = "Tie the Rope";
+            actionBtn.className = "action reset";
+            statusText.innerText = "Gravity is OFF";
+            statusText.style.color = "#ff5252";
+            subText.innerText = "The Moon is flying away in a straight line!";
+        } else {
+            isTethered = true;
+            angle = Math.atan2(moon.y - centerY, moon.x - centerX); // Snap to current position
+            actionBtn.innerText = "Cut the Rope!";
+            actionBtn.className = "action cut";
+            statusText.innerText = "Gravity is ON";
+            statusText.style.color = "white";
+            subText.innerText = "The rope pulls it back into a circle!";
+        }
+    });
+
+    window.addEventListener('resize', init);
+    init();
+    draw();
+
+    // Fade in the button after 5 seconds of the simulation being open
+    setTimeout(() => {
+        whyBtn.classList.add('visible');
+    }, 5000);
+
+    // Notify parent when user is done
+    whyBtn.addEventListener('click', () => {
+        window.parent.postMessage('playVideo', '*');
+    });
+</script>
+</body>
+</html>

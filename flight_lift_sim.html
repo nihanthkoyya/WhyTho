@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's Holding It Up?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky: #00144f;
+            --bus: #ffca28;
+            --wing: #90a4ae;
+            --accent: #26a69a;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--sky);
+            font-family: system-ui, sans-serif;
+            overflow: hidden;
+            color: #37474f;
+        }
+
+        #ui {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-wing {
+            background: var(--wing);
+            color: white;
+        }
+
+        .btn-engine {
+            background: var(--accent);
+            color: white;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .active {
+            outline: 4px solid white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #msg {
+            position: absolute;
+            top: 50px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        #why-though-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: 'Walter Turncoat', cursive;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #f8e5b4;
+            border: 3px solid #5a4b3c;
+            border-radius: 10px;
+            color: #5a4b3c;
+            padding: 10px 20px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            z-index: 60;
+            transition: transform 0.2s, opacity 0.5s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #why-though-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #why-though-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="msg">
+        <h2 id="status">The bus is stationary.</h2>
+        <p>Add wings and moving air to fly!</p>
+    </div>
+
+    <canvas id="sim"></canvas>
+
+    <div id="ui">
+        <button id="wingBtn" class="btn-wing">Attach Wings</button>
+        <button id="engineBtn" class="btn-engine">Start Engine</button>
+    </div>
+
+    <button id="why-though-btn">Why though?</button>
+
+    <script>
+        const canvas = document.getElementById('sim');
+        const ctx = canvas.getContext('2d');
+        const wingBtn = document.getElementById('wingBtn');
+        const engineBtn = document.getElementById('engineBtn');
+        const statusText = document.getElementById('status');
+        const whyBtn = document.getElementById('why-though-btn');
+
+        let width, height;
+        let hasWings = false;
+        let engineOn = false;
+
+        // Physics State
+        let bus = {
+            x: 0,
+            y: 0,
+            w: 120,
+            h: 60,
+            targetY: 0,
+            velocity: 0
+        };
+
+        let particles = [];
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            bus.x = width / 2 - bus.w / 2;
+            bus.y = height - 150;
+            bus.targetY = bus.y;
+        }
+
+        function createParticle() {
+            if (!engineOn) return;
+            particles.push({
+                x: width,
+                y: Math.random() * height,
+                speed: 10 + Math.random() * 10,
+                len: 20 + Math.random() * 30
+            });
+        }
+
+        function update() {
+            // Logic: Wings + Engine = Lift
+            if (hasWings && engineOn) {
+                bus.targetY = height / 2;
+                statusText.innerText = "We have LIFT! Air is pushing the wings up.";
+            } else if (hasWings && !engineOn) {
+                bus.targetY = height - 150;
+                statusText.innerText = "Wings added, but the air isn't moving.";
+            } else if (!hasWings && engineOn) {
+                bus.targetY = height - 150;
+                statusText.innerText = "Engine is on, but there's nothing to catch the air.";
+            } else {
+                bus.targetY = height - 150;
+                statusText.innerText = "Add wings and move the air!";
+            }
+
+            // Smooth movement
+            bus.y += (bus.targetY - bus.y) * 0.05;
+
+            // Particles
+            if (engineOn && Math.random() > 0.5) createParticle();
+            particles.forEach((p, i) => {
+                p.x -= p.speed;
+                if (p.x < -50) particles.splice(i, 1);
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw Wind Particles
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.lineWidth = 2;
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + p.len, p.y);
+                ctx.stroke();
+            });
+
+            // Draw Ground
+            ctx.fillStyle = "#cfd8dc";
+            ctx.fillRect(0, height - 100, width, 100);
+
+            // Draw Wings (if attached)
+            if (hasWings) {
+                ctx.fillStyle = "#90a4ae";
+                // Simple wing shape
+                ctx.beginPath();
+                ctx.roundRect(bus.x - 40, bus.y + 20, 200, 15, 10);
+                ctx.fill();
+            }
+
+            // Draw Bus
+            ctx.fillStyle = "#ffca28";
+            ctx.beginPath();
+            ctx.roundRect(bus.x, bus.y, bus.w, bus.h, 10);
+            ctx.fill();
+
+            // Windows
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(bus.x + 10, bus.y + 10, 25, 20);
+            ctx.fillRect(bus.x + 45, bus.y + 10, 25, 20);
+            ctx.fillRect(bus.x + 80, bus.y + 10, 30, 20);
+
+            // Wheels
+            ctx.fillStyle = "#37474f";
+            ctx.beginPath();
+            ctx.arc(bus.x + 30, bus.y + bus.h, 12, 0, Math.PI * 2);
+            ctx.arc(bus.x + 90, bus.y + bus.h, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            requestAnimationFrame(() => {
+                update();
+                draw();
+            });
+        }
+
+        wingBtn.addEventListener('click', () => {
+            hasWings = !hasWings;
+            wingBtn.classList.toggle('active');
+            wingBtn.innerText = hasWings ? "Remove Wings" : "Attach Wings";
+        });
+
+        engineBtn.addEventListener('click', () => {
+            engineOn = !engineOn;
+            engineBtn.classList.toggle('active');
+            engineBtn.innerText = engineOn ? "Stop Engine" : "Start Engine";
+        });
+
+        window.addEventListener('resize', init);
+        init();
+        draw();
+
+        // Show 'Why though?' button after 5 seconds to prompt returning to video
+        setTimeout(() => {
+            whyBtn.classList.add('visible');
+        }, 5000);
+
+        whyBtn.addEventListener('click', () => {
+            window.parent.postMessage('playVideo', '*');
+        });
+    </script>
+</body>
+
+</html>

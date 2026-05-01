@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oil Slip</title>
+<link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: #07070d;
+  overflow: hidden;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#game {
+  position: relative;
+  width: 100%; height: 100vh;
+  overflow: hidden;
+}
+
+canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* ── HUD ── */
+#hud-left {
+  position: absolute;
+  top: 28px; left: 28px;
+  pointer-events: none;
+}
+
+#hud-left .label {
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 2px;
+}
+
+#hud-left .value {
+  font-size: 22px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: .04em;
+  line-height: 1;
+}
+
+#hud-left .unit {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  margin-left: 2px;
+  letter-spacing: .1em;
+}
+
+.hud-row { margin-bottom: 18px; }
+
+#hud-right {
+  position: absolute;
+  top: 28px; right: 28px;
+  text-align: right;
+  pointer-events: none;
+}
+
+#hud-right .label { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,80,60,0.45); margin-bottom: 2px; }
+#hud-right .value { font-size: 26px; font-weight: bold; color: rgba(255,80,60,0.9); letter-spacing: .04em; line-height: 1; }
+
+/* ── Toolbox ── */
+#toolbox {
+  position: absolute;
+  bottom: 28px; right: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#oil-can {
+  width: 58px; height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  cursor: grab;
+  user-select: none;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+}
+
+#oil-can:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.18); transform: scale(1.04); }
+#oil-can:active { cursor: grabbing; transform: scale(0.97); }
+
+#oil-can svg { display: block; }
+
+#toolbox-label {
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ── Drag ghost ── */
+#ghost {
+  position: absolute;
+  pointer-events: none;
+  display: none;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  opacity: 0.85;
+  transition: filter 0.1s;
+}
+
+/* ── Drop hint ── */
+#drop-hint {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center;
+  padding-bottom: 10px;
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(80,180,255,0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#drop-hint.show { opacity: 1; }
+
+#why-though-btn {
+  position: absolute;
+  bottom: 28px;
+  left: 28px;
+  font-family: 'Walter Turncoat', cursive;
+  font-size: 1.5rem;
+  background-color: #f8e5b4;
+  border: 3px solid #5a4b3c;
+  border-radius: 10px;
+  color: #5a4b3c;
+  padding: 10px 20px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+  cursor: pointer;
+  z-index: 60;
+  transition: transform 0.2s;
+}
+#why-though-btn:hover {
+  transform: scale(1.05);
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="c"></canvas>
+
+  <!-- HUD left -->
+  <div id="hud-left">
+    <div class="hud-row">
+      <div class="label">speed</div>
+      <div class="value"><span id="v-speed">0</span><span class="unit">km/h</span></div>
+    </div>
+    <div class="hud-row">
+      <div class="label">distance</div>
+      <div class="value"><span id="v-dist">0</span><span class="unit">m</span></div>
+    </div>
+  </div>
+
+  <!-- HUD right -->
+  <div id="hud-right">
+    <div class="label">slips</div>
+    <div class="value" id="v-slips">0</div>
+  </div>
+
+  <!-- Toolbox -->
+  <div id="toolbox">
+    <div id="oil-can" title="Drag to pour oil">
+      <!-- Oil drum SVG -->
+      <svg width="34" height="42" viewBox="0 0 34 42" fill="none">
+        <rect x="5" y="10" width="24" height="28" rx="3" fill="#1a1f2e" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <rect x="10" y="6" width="14" height="6" rx="2" fill="#141820" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+        <circle cx="17" cy="9" r="2.5" fill="#0a0c12" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <line x1="5" y1="20" x2="29" y2="20" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        <line x1="5" y1="28" x2="29" y2="28" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <!-- iridescent label -->
+        <rect x="8" y="22" width="18" height="5" rx="1" fill="url(#lg)"/>
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#4af" stop-opacity=".6"/>
+            <stop offset="50%"  stop-color="#f4a" stop-opacity=".6"/>
+            <stop offset="100%" stop-color="#4fa" stop-opacity=".6"/>
+          </linearGradient>
+        </defs>
+        <text x="17" y="26.5" font-size="4" fill="rgba(255,255,255,0.7)" text-anchor="middle" font-family="monospace" font-weight="bold">OIL</text>
+      </svg>
+    </div>
+    <div id="toolbox-label">drag to pour</div>
+  </div>
+
+  <button id="why-though-btn">Why though?</button>
+
+  <!-- Drag ghost -->
+  <div id="ghost">
+    <svg width="40" height="50" viewBox="0 0 34 42" fill="none">
+      <rect x="5" y="10" width="24" height="28" rx="3" fill="#1a1f2e" stroke="rgba(100,200,255,0.5)" stroke-width="1.5"/>
+      <rect x="10" y="6" width="14" height="6" rx="2" fill="#141820"/>
+      <circle cx="17" cy="9" r="2.5" fill="#0a0c12" stroke="rgba(100,200,255,0.3)" stroke-width="1"/>
+      <line x1="5" y1="20" x2="29" y2="20" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <line x1="5" y1="28" x2="29" y2="28" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div id="drop-hint">↓ drop on the road</div>
+</div>
+
+<script>
+/* ── Setup ────────────────────────────────────────── */
+const canvas  = document.getElementById('c');
+const ctx     = canvas.getContext('2d');
+const gameEl  = document.getElementById('game');
+const ghost   = document.getElementById('ghost');
+const hint    = document.getElementById('drop-hint');
+const elSpeed = document.getElementById('v-speed');
+const elDist  = document.getElementById('v-dist');
+const elSlips = document.getElementById('v-slips');
+
+let W, H, ROAD_TOP, ROAD_Y;
+
+function resize() {
+  W = canvas.width  = gameEl.offsetWidth;
+  H = canvas.height = gameEl.offsetHeight;
+  ROAD_TOP = H * 0.68;
+  ROAD_Y   = H * 0.66;
+  runner.screenX = W * 0.22;
+}
+
+/* ── Scene Data ───────────────────────────────────── */
+let cameraX  = 0;
+let curTime  = 0;
+let shakeX   = 0, shakeY = 0;
+let particles = [];
+let puddles   = [];
+let slipFlash = 0;
+
+const stars = Array.from({ length: 90 }, () => ({
+  x: Math.random() * 4000,
+  y: Math.random(),
+  r: Math.random() * 1.4 + 0.3,
+  twinkle: Math.random() * Math.PI * 2,
+}));
+
+const buildings = Array.from({ length: 22 }, () => ({
+  x: Math.random() * 4000,
+  w: 28 + Math.random() * 70,
+  h: 35 + Math.random() * 130,
+  layer: Math.random() < 0.5 ? 0.12 : 0.28,
+}));
+
+/* ── Runner ───────────────────────────────────────── */
+const runner = {
+  screenX: 0,
+  worldX:  0,
+  speed:   160,
+  state:   'running',  /* running | slipping | recovering */
+  frame:   0,
+  angle:   0,
+  offY:    0,
+  slipTimer: 0,
+  slipCount: 0,
+  cooldown: 0,
+};
+
+/* ── Particles ────────────────────────────────────── */
+function spawnSlip(sx, sy) {
+  for (let i = 0; i < 24; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 60 + Math.random() * 120;
+    particles.push({
+      x: sx, y: sy,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 80,
+      life: 1,
+      color: `hsl(${190 + Math.random() * 50},75%,${55 + Math.random() * 20}%)`,
+      r: 2 + Math.random() * 3,
+    });
+  }
+}
+
+function spawnPour(sx, sy) {
+  for (let i = 0; i < 14; i++) {
+    const a = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI;
+    const sp = 40 + Math.random() * 80;
+    particles.push({
+      x: sx, y: sy,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 50,
+      life: 1,
+      color: `hsl(${200 + Math.random() * 60},60%,50%)`,
+      r: 2 + Math.random() * 2,
+    });
+  }
+}
+
+/* ── Draw: Sky + Stars ────────────────────────────── */
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, ROAD_TOP);
+  g.addColorStop(0, '#04040a');
+  g.addColorStop(1, '#0b0b18');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, ROAD_TOP);
+
+  stars.forEach(s => {
+    const sx = ((s.x - cameraX * 0.04) % (W + 60) + W + 60) % (W + 60);
+    const tw = Math.sin(curTime * 1.2 + s.twinkle) * 0.25 + 0.75;
+    ctx.globalAlpha = tw * 0.55;
+    ctx.fillStyle = '#e8eaff';
+    ctx.beginPath();
+    ctx.arc(sx, s.y * ROAD_TOP * 0.9, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* ── Draw: Buildings ──────────────────────────────── */
+function drawBuildings() {
+  buildings.forEach(b => {
+    const wrap = W + 200;
+    const sx = ((b.x - cameraX * b.layer) % wrap + wrap) % wrap - 100;
+    const hasMoon = b.layer > 0.2 && b.w > 50;
+    ctx.fillStyle = b.layer < 0.2 ? '#090910' : '#0c0c1a';
+    ctx.fillRect(sx, ROAD_TOP - b.h, b.w, b.h);
+
+    if (hasMoon) {
+      /* lit windows */
+      for (let wy = 4; wy < b.h - 8; wy += 10) {
+        for (let wx = 4; wx < b.w - 4; wx += 10) {
+          if (Math.random() < 0.3) {
+            ctx.fillStyle = `rgba(255,230,160,${0.04 + Math.random() * 0.06})`;
+            ctx.fillRect(sx + wx, ROAD_TOP - b.h + wy, 5, 4);
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── Draw: Road ───────────────────────────────────── */
+function drawRoad() {
+  /* ground fill */
+  ctx.fillStyle = '#0d0d14';
+  ctx.fillRect(0, ROAD_TOP, W, H - ROAD_TOP);
+
+  /* road surface */
+  ctx.fillStyle = '#111119';
+  ctx.fillRect(0, ROAD_Y, W, H - ROAD_Y);
+
+  /* road top edge */
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, ROAD_Y); ctx.lineTo(W, ROAD_Y); ctx.stroke();
+
+  /* moving dashes */
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([28, 36]);
+  ctx.lineDashOffset = -(cameraX % 64);
+  ctx.beginPath(); ctx.moveTo(0, ROAD_Y + 28); ctx.lineTo(W, ROAD_Y + 28); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* bottom edge */
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, ROAD_Y + 56); ctx.lineTo(W, ROAD_Y + 56); ctx.stroke();
+}
+
+/* ── Draw: Puddles ────────────────────────────────── */
+function drawPuddles() {
+  puddles.forEach(p => {
+    const sx = p.worldX - cameraX;
+    if (sx + p.w < -60 || sx > W + 60) return;
+    const cx = sx + p.w * 0.5;
+    const cy = ROAD_Y + 1;
+    const rx = p.w * 0.5;
+    const ry = 9;
+
+    ctx.save();
+    /* dark base */
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#090910';
+    ctx.fill();
+
+    /* iridescent shimmer */
+    const hOff = (curTime * 38 + p.hueOff) % 360;
+    const sg = ctx.createLinearGradient(sx, cy - ry, sx + p.w, cy + ry);
+    sg.addColorStop(0,   `hsla(${hOff},             85%, 62%, 0.38)`);
+    sg.addColorStop(0.3, `hsla(${(hOff+60)%360},   90%, 70%, 0.28)`);
+    sg.addColorStop(0.65,`hsla(${(hOff+130)%360},  85%, 65%, 0.38)`);
+    sg.addColorStop(1,   `hsla(${(hOff+200)%360},  75%, 58%, 0.22)`);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = sg;
+    ctx.fill();
+
+    /* specular highlight */
+    ctx.beginPath();
+    ctx.ellipse(cx - rx * 0.22, cy - ry * 0.35, rx * 0.38, ry * 0.38, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fill();
+
+    ctx.restore();
+  });
+}
+
+/* ── Draw: Runner ─────────────────────────────────── */
+function drawRunner(dt) {
+  ctx.save();
+  ctx.translate(runner.screenX + shakeX, ROAD_Y + runner.offY + shakeY);
+  ctx.rotate(runner.angle);
+
+  const col = 'rgba(215,218,235,0.92)';
+  ctx.strokeStyle = col;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const hR = 11, bodyL = 27, legL = 24, armL = 19;
+  const headCY  = -legL - bodyL - hR * 2;
+  const shouldY = headCY + hR * 2;
+  const hipY    = shouldY + bodyL;
+
+  /* head */
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, headCY + hR, hR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  /* spine */
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(0, shouldY); ctx.lineTo(0, hipY); ctx.stroke();
+
+  if (runner.state === 'running') {
+    runner.frame += runner.speed * dt * 0.012;
+    const s = Math.sin(runner.frame);
+
+    /* legs */
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(s * 13, hipY + legL * 0.48);
+    ctx.lineTo(s * 7,  hipY + legL);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(-s * 13, hipY + legL * 0.48);
+    ctx.lineTo(-s * 7,  hipY + legL);
+    ctx.stroke();
+
+    /* arms */
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo(-s * 11, shouldY + 4 + armL * 0.7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo( s * 11, shouldY + 4 + armL * 0.7); ctx.stroke();
+
+    /* speed lines */
+    if (runner.speed > 240) {
+      const a = Math.min((runner.speed - 240) / 180, 1) * 0.4;
+      ctx.strokeStyle = `rgba(90,140,255,${a})`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        const lx = -18 - i * 14;
+        const ly = headCY + hR * 2 + i * 18;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 18, ly); ctx.stroke();
+      }
+    }
+
+  } else if (runner.state === 'slipping') {
+    /* flailing pose */
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(0, hipY); ctx.lineTo(28, hipY + 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, hipY); ctx.lineTo(-16, hipY + 20); ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo(-26, shouldY - 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo(23, shouldY - 12); ctx.stroke();
+
+  } else if (runner.state === 'recovering') {
+    /* getting up – interpolate toward idle */
+    const t = Math.min(runner.slipTimer / 0.6, 1);
+    ctx.lineWidth = 2.5;
+    const legSplay = (1 - t) * 28;
+    ctx.beginPath(); ctx.moveTo(0, hipY); ctx.lineTo(legSplay, hipY + (1-t)*14 + t*legL); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, hipY); ctx.lineTo(-legSplay*0.6, hipY + (1-t)*20 + t*legL); ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo(-armL * t, shouldY + 4 + armL * 0.7 * t); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, shouldY + 4); ctx.lineTo( armL * t, shouldY + 4 + armL * 0.7 * t); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+/* ── Draw: Particles ──────────────────────────────── */
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* ── Draw: Slip Flash ─────────────────────────────── */
+function drawSlipText() {
+  if (slipFlash <= 0) return;
+  ctx.save();
+  ctx.translate(runner.screenX + shakeX, ROAD_Y - 90 + runner.offY + shakeY);
+  const a = Math.min(slipFlash, 1);
+  const scale = 1 + (1 - slipFlash) * 0.5;
+  ctx.scale(scale, scale);
+  ctx.textAlign = 'center';
+  ctx.font = `bold 28px 'Courier New', monospace`;
+  ctx.fillStyle = `rgba(255,80,55,${a})`;
+  ctx.fillText('SLIP!', 0, 0);
+  ctx.restore();
+  ctx.textAlign = 'left';
+}
+
+/* ── Update ───────────────────────────────────────── */
+let lastT = 0;
+
+function update(t) {
+  const dt = Math.min((t - lastT) / 1000, 0.05);
+  lastT = t;
+  curTime = t * 0.001;
+
+  /* shake decay */
+  shakeX *= 0.82; shakeY *= 0.82;
+  if (Math.abs(shakeX) < 0.1) shakeX = 0;
+  if (Math.abs(shakeY) < 0.1) shakeY = 0;
+
+  slipFlash = Math.max(0, slipFlash - dt * 1.8);
+
+  if (runner.state === 'running') {
+    runner.speed = Math.min(runner.speed + dt * 9, 460);
+    runner.worldX += runner.speed * dt;
+    runner.cooldown = Math.max(0, runner.cooldown - dt);
+    cameraX = runner.worldX - runner.screenX;
+
+    /* puddle collision */
+    if (runner.cooldown <= 0) {
+      for (const p of puddles) {
+        if (runner.worldX > p.worldX + 10 && runner.worldX < p.worldX + p.w - 10) {
+          runner.state = 'slipping';
+          runner.slipTimer = 0;
+          runner.slipCount++;
+          slipFlash = 1.8;
+          elSlips.textContent = runner.slipCount;
+          spawnSlip(runner.screenX, ROAD_Y);
+          shakeX = (Math.random() - 0.5) * 22;
+          shakeY = (Math.random() - 0.5) * 14;
+          break;
+        }
+      }
+    }
+
+  } else if (runner.state === 'slipping') {
+    runner.slipTimer += dt;
+    runner.worldX += runner.speed * 0.25 * dt;
+    cameraX = runner.worldX - runner.screenX;
+    runner.angle = Math.min(runner.angle + dt * 3.2, Math.PI / 2.1);
+    runner.offY  = Math.min(runner.offY  + dt * 70, 22);
+
+    if (runner.slipTimer < 0.35) {
+      shakeX = (Math.random() - 0.5) * 12;
+      shakeY = (Math.random() - 0.5) * 8;
+    }
+
+    if (runner.slipTimer > 1.8) {
+      runner.state     = 'recovering';
+      runner.slipTimer = 0;
+    }
+
+  } else if (runner.state === 'recovering') {
+    runner.slipTimer += dt;
+    runner.angle = Math.max(runner.angle - dt * 3.5, 0);
+    runner.offY  = Math.max(runner.offY  - dt * 55, 0);
+    runner.worldX += runner.speed * 0.15 * dt;
+    cameraX = runner.worldX - runner.screenX;
+
+    if (runner.angle <= 0 && runner.offY <= 0) {
+      runner.state    = 'running';
+      runner.frame    = 0;
+      runner.speed    = Math.max(runner.speed - 60, 130);
+      runner.cooldown = 1.5; /* don't re-slip immediately */
+    }
+  }
+
+  /* particles */
+  particles.forEach(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 220 * dt;
+    p.life -= dt * 1.6;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  /* HUD */
+  elSpeed.textContent = Math.round(runner.speed * 0.036 * 10) / 10;
+  elDist.textContent  = Math.floor(runner.worldX / 10);
+
+  /* ── render ── */
+  ctx.clearRect(0, 0, W, H);
+  drawSky();
+  drawBuildings();
+  drawRoad();
+  drawPuddles();
+  drawParticles();
+  drawRunner(dt);
+  drawSlipText();
+
+  requestAnimationFrame(update);
+}
+
+/* ── Drag & Drop ──────────────────────────────────── */
+const oilCan = document.getElementById('oil-can');
+let isDragging = false;
+
+function getRelPos(clientX, clientY) {
+  const rect = gameEl.getBoundingClientRect();
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startDrag(clientX, clientY) {
+  isDragging = true;
+  ghost.style.display = 'block';
+  hint.classList.add('show');
+  moveDrag(clientX, clientY);
+}
+
+function moveDrag(clientX, clientY) {
+  if (!isDragging) return;
+  const pos = getRelPos(clientX, clientY);
+  ghost.style.left = pos.x + 'px';
+  ghost.style.top  = pos.y + 'px';
+  ghost.style.display = 'block';
+  const onRoad = pos.y > ROAD_Y - 20 && pos.y < ROAD_Y + 70;
+  ghost.style.filter = onRoad
+    ? 'drop-shadow(0 0 14px rgba(80,190,255,0.8))'
+    : 'drop-shadow(0 0 6px rgba(80,180,255,0.3))';
+}
+
+function endDrag(clientX, clientY) {
+  if (!isDragging) return;
+  isDragging = false;
+  ghost.style.display = 'none';
+  hint.classList.remove('show');
+
+  const pos = getRelPos(clientX, clientY);
+  if (pos.y > ROAD_Y - 25 && pos.y < ROAD_Y + 65) {
+    const pw = 70 + Math.random() * 80;
+    const wx = (pos.x + cameraX) - pw * 0.5;
+    puddles.push({ worldX: wx, w: pw, hueOff: Math.random() * 360 });
+    spawnPour(pos.x, pos.y);
+  }
+}
+
+/* mouse */
+oilCan.addEventListener('mousedown',  e => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+window .addEventListener('mousemove',  e => moveDrag(e.clientX, e.clientY));
+window .addEventListener('mouseup',    e => endDrag(e.clientX, e.clientY));
+
+/* touch */
+oilCan.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+window .addEventListener('touchmove',  e => { if (isDragging) { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+window .addEventListener('touchend',   e => { endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY); });
+
+/* resize */
+window.addEventListener('resize', resize);
+
+// Notify parent when user is done
+document.getElementById('why-though-btn').addEventListener('click', () => {
+    window.parent.postMessage('playVideo', '*');
+});
+
+/* ── Boot ─────────────────────────────────────────── */
+resize();
+requestAnimationFrame(t => { lastT = t; update(t); });
+</script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Built-In Snowsuits Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Walter Turncoat', cursive;
+            overflow: hidden;
+            background: #e0f7fa;
+            user-select: none;
+        }
+
+        #simulation {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .barn {
+            width: 30%;
+            height: 100%;
+            background: #c25953;
+            border-right: 5px solid #8b3a36;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .barn-title {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 1.5rem;
+            text-shadow: 1px 1px 2px #000;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .snow {
+            width: 70%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(180deg, #81d4fa 0%, #b3e5fc 100%);
+            overflow: hidden;
+        }
+
+        .snow-title {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #333;
+            font-size: 1.5rem;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        .animal-container {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: grab;
+            z-index: 10;
+            touch-action: none;
+            transition: transform 0.1s;
+        }
+
+        .animal-container:active {
+            cursor: grabbing;
+            z-index: 20;
+            transform: scale(1.1);
+        }
+
+        .heat-meter {
+            width: 60px;
+            height: 10px;
+            background: #555;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        .heat-fill {
+            width: 100%;
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.2s, background 0.2s;
+        }
+
+        .animal {
+            width: 130px;
+            height: 130px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        .tool-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 3px dashed #5a4b3c;
+            z-index: 30;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-label {
+            color: #5a4b3c;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .magnifying-glass {
+            width: 120px;
+            height: 120px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            cursor: grab;
+            filter: drop-shadow(2px 6px 6px rgba(0, 0, 0, 0.5));
+            transition: transform 0.1s;
+        }
+
+        .magnifying-glass:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        .zoom-view {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 8px solid #5a4b3c;
+            background: #fff;
+            display: none;
+            z-index: 40;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        .zoom-hair {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60%;
+            background: repeating-linear-gradient(45deg, #a67c52, #a67c52 10px, #8c6239 10px, #8c6239 20px);
+            border-radius: 20% 20% 0 0;
+        }
+
+        .zoom-air {
+            position: absolute;
+            bottom: 15%;
+            left: 10%;
+            width: 80%;
+            height: 25%;
+            background: rgba(255, 220, 100, 0.6);
+            border-radius: 20px;
+            text-align: center;
+            color: #fff;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px #bb6a00;
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-label {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.3rem;
+            color: #5a4b3c;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 0;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Snowflakes */
+        .snowflakes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .snowflake {
+            position: absolute;
+            font-size: 1.5rem;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="simulation">
+        <div class="barn" id="barn">
+            <div class="barn-title">Warm Barn</div>
+        </div>
+        <div class="snow" id="snow">
+            <div class="snowflakes" id="snowflakes"></div>
+            <div class="snow-title">Snowy Field ❄️</div>
+        </div>
+
+        <div class="tool-container">
+            <div class="tool-label">Drag over animals:</div>
+            <div style="width: 100px; height: 100px; border: 3px dashed #a67c52; border-radius: 50%;"></div>
+        </div>
+
+        <div class="magnifying-glass" id="mag-glass" draggable="false"
+            style="position: absolute; bottom: 20px; left: calc(50% + 20px); z-index: 50; background-image: url('images/lens.png');">
+        </div>
+
+        <div class="zoom-view" id="zoom-view">
+            <div class="zoom-label" id="zoom-label">Zoomed View</div>
+            <div class="zoom-hair" id="zoom-hair"></div>
+            <div class="zoom-air" id="zoom-air">Trapped Air 🔥</div>
+        </div>
+
+        <button id="why-though-btn"
+            style="position: absolute; bottom: 20px; right: 20px; font-family: 'Walter Turncoat', cursive; font-size: 1.5rem; background-color: #f8e5b4; border: 3px solid #5a4b3c; border-radius: 10px; color: #5a4b3c; padding: 10px 20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); cursor: pointer; z-index: 60; transition: transform 0.2s;">Why
+            though?</button>
+    </div>
+
+    <script>
+        // Snowflakes generator
+        const snowContainer = document.getElementById('snowflakes');
+        for (let i = 0; i < 40; i++) {
+            let flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.innerHTML = '❄';
+            flake.style.left = Math.random() * 100 + '%';
+            flake.style.animationDuration = Math.random() * 5 + 3 + 's';
+            flake.style.animationDelay = Math.random() * 5 + 's';
+            let size = Math.random() * 0.8 + 0.5;
+            flake.style.fontSize = size + 'rem';
+            snowContainer.appendChild(flake);
+        }
+
+        const animals = [
+            { id: 'cat', title: 'Hairless Cat', image: 'images/cat.png', hasFur: false, heat: 100 },
+            { id: 'beaver', title: 'Beaver', image: 'images/beaver.png', hasFur: true, heat: 100 },
+            { id: 'goat', title: 'Goat', image: 'images/goat.png', hasFur: true, heat: 100 }
+        ];
+
+        const animalElements = {};
+        const simulation = document.getElementById('simulation');
+
+        animals.forEach((data, index) => {
+            const el = document.createElement('div');
+            el.className = 'animal-container';
+            el.id = data.id;
+            el.title = data.title;
+            // Position them nicely in the barn
+            el.style.left = '5%';
+            el.style.top = (15 + index * 25) + '%';
+
+            el.innerHTML = `
+                <div class="heat-meter"><div class="heat-fill" id="${data.id}-heat"></div></div>
+                <div class="animal" style="background-image: url('${data.image}')"></div>
+            `;
+            simulation.appendChild(el);
+            animalElements[data.id] = el;
+
+            makeDraggable(el, data);
+        });
+
+        // Heat engine
+        setInterval(() => {
+            const barnWidth = window.innerWidth * 0.3; // 30% is barn
+            animals.forEach(data => {
+                const el = animalElements[data.id];
+                const rect = el.getBoundingClientRect();
+
+                // If mostly outside the barn, it's in the snow
+                const isInSnow = (rect.left + rect.width / 2) > barnWidth;
+
+                if (isInSnow) {
+                    if (!data.hasFur) {
+                        data.heat -= 3; // Drops quickly
+                    } else {
+                        data.heat -= 0.15; // Maintains nicely
+                    }
+                } else {
+                    data.heat += 5; // Recharges in barn
+                }
+
+                // Clamp
+                if (data.heat < 0) data.heat = 0;
+                if (data.heat > 100) data.heat = 100;
+
+                const heatFill = document.getElementById(`${data.id}-heat`);
+                heatFill.style.width = data.heat + '%';
+
+                if (data.heat > 60) heatFill.style.background = '#00ff00';
+                else if (data.heat > 30) heatFill.style.background = '#ffa500';
+                else heatFill.style.background = '#ff0000';
+
+                // Shiver effect if freezing
+                if (data.heat === 0) {
+                    el.style.transform = `rotate(${Math.random() * 10 - 5}deg) translateX(${Math.random() * 4 - 2}px)`;
+                } else {
+                    el.style.transform = '';
+                }
+            });
+        }, 100);
+
+        const magGlass = document.getElementById('mag-glass');
+        makeDraggable(magGlass, null, true);
+
+        // Notify parent when user is done
+        document.getElementById('why-though-btn').addEventListener('click', () => {
+            window.parent.postMessage('playVideo', '*');
+        });
+
+        function showZoom(data) {
+            const zoomView = document.getElementById('zoom-view');
+            const zoomLabel = document.getElementById('zoom-label');
+            const zoomHair = document.getElementById('zoom-hair');
+            const zoomAir = document.getElementById('zoom-air');
+
+            zoomView.style.display = 'block';
+            if (data.hasFur) {
+                zoomLabel.innerText = "Thick, Overlapping Hairs";
+                zoomHair.style.background = "repeating-linear-gradient(45deg, #a67c52, #a67c52 10px, #8c6239 10px, #8c6239 20px)";
+                zoomAir.style.display = "flex";
+            } else {
+                zoomLabel.innerText = "Bare Skin";
+                zoomHair.style.background = "#ffb6c1";
+                zoomAir.style.display = "none";
+            }
+        }
+
+        function hideZoom() {
+            document.getElementById('zoom-view').style.display = 'none';
+        }
+
+        function makeDraggable(elmnt, data, isTool = false) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            let activeCollision = null;
+
+            elmnt.addEventListener('mousedown', dragMouseDown);
+            elmnt.addEventListener('touchstart', dragMouseDown, { passive: false });
+
+            function dragMouseDown(e) {
+                if (e.target.closest('.heat-meter')) return;
+
+                e.preventDefault();
+
+                if (isTool) {
+                    elmnt.style.top = elmnt.offsetTop + 'px';
+                    elmnt.style.bottom = 'auto'; // release bottom anchor smoothly
+                }
+
+                let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                pos3 = clientX;
+                pos4 = clientY;
+
+                document.addEventListener('mouseup', closeDragElement);
+                document.addEventListener('touchend', closeDragElement);
+                document.addEventListener('mousemove', elementDrag);
+                document.addEventListener('touchmove', elementDrag, { passive: false });
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                pos1 = pos3 - clientX;
+                pos2 = pos4 - clientY;
+                pos3 = clientX;
+                pos4 = clientY;
+
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+
+                if (isTool) {
+                    const rect = elmnt.getBoundingClientRect();
+                    let found = null;
+                    animals.forEach(data => {
+                        const el = animalElements[data.id];
+                        const erect = el.getBoundingClientRect();
+                        if (
+                            rect.left < erect.right &&
+                            rect.right > erect.left &&
+                            rect.top < erect.bottom &&
+                            rect.bottom > erect.top
+                        ) {
+                            found = data;
+                        }
+                    });
+
+                    if (found !== activeCollision) {
+                        activeCollision = found;
+                        if (found) {
+                            showZoom(found);
+                        } else {
+                            hideZoom();
+                        }
+                    }
+                }
+            }
+
+            function closeDragElement() {
+                document.removeEventListener('mouseup', closeDragElement);
+                document.removeEventListener('touchend', closeDragElement);
+                document.removeEventListener('mousemove', elementDrag);
+                document.removeEventListener('touchmove', elementDrag);
+
+                if (isTool) {
+                    elmnt.style.top = 'auto';
+                    elmnt.style.bottom = '20px';
+                    elmnt.style.left = 'calc(50% + 20px)';
+                    hideZoom();
+                    activeCollision = null;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

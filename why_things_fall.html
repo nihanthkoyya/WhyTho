@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why things fall Chapter - Inverted Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@1,529&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Flavors&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="CSS/styles.css">
+
+</head>
+
+<body class="chapter-index inverted-chapter">
+
+    <nav class="navbar navbar-expand-lg navigation-bar ">
+        <li class="navbar-brand brand">
+            <a class="nav-link" href="/index.html"><img src="images/favicon-32x32.png" alt="icon">WhyTho</a>
+        </li>
+        <ul class="navbar-nav ms-auto bundle-nav">
+            <li class="nav-item">
+                <a class="nav-link link-nav" href="">contact</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link link-nav" href="">about</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href=""><button type="button" class="btn btn-light">Sign In</button></a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Title -->
+    <h1 class="lets-go mb-5 heat-title">Why Things Fall</h1>
+
+    <!-- Minimalistic Video Library Grid -->
+    <div class="container pb-5">
+        <div class="row g-5 justify-content-center">
+
+            <!-- Video Item 1 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-right" id="gravity-sandbox-card">
+                    <div class="inverted-tape tape-alt"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Simulation Iframe (initially hidden) -->
+                        <iframe id="gravity-sandbox-sim" src="gravity_sandbox_sim.html"
+                            style="display: none; border: none; border-radius: 8px; width: 100%; height: 100%;"
+                            allowfullscreen></iframe>
+                        <!-- Replace src with your actual video file -->
+                        <video controls id="gravity-sandbox-vid">
+                            <source
+                                src="GRAVITY/Earth in Motion_ Understanding Gravity, Day and Night, and Why We Have Seasons.mp4"
+                                type="video/mp4">
+                            <!-- Native captions track -->
+                            <track kind="captions" label="English" srclang="en" src="captions.vtt" default>
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">Why Things Fall</div>
+                </div>
+            </div>
+
+            <!-- Video Item 2 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-left" id="flight-lift-card">
+                    <div class="inverted-tape"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Simulation Iframe (initially hidden) -->
+                        <iframe id="flight-lift-sim" src="flight_lift_sim.html"
+                            style="display: none; border: none; border-radius: 8px; width: 100%; height: 100%;"
+                            allowfullscreen></iframe>
+                        <!-- Replace src with your actual video file -->
+                        <video controls id="flight-lift-vid">
+                            <source src="GRAVITY/gravity & nlm (Understanding Moving Air, Lift, and How Wings Work).mp4"
+                                type="video/mp4">
+                            <!-- Native captions track -->
+                            <track kind="captions" label="English" srclang="en" src="captions.vtt" default>
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">Wanna FLY ?</div>
+                </div>
+            </div>
+
+            <!-- Video Item 3 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-right" id="gravity-jump-card">
+                    <div class="inverted-tape tape-alt"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Simulation Iframe (initially hidden) -->
+                        <iframe id="gravity-jump-sim" src="gravity_jump_sim.html"
+                            style="display: none; border: none; border-radius: 8px; width: 100%; height: 100%;"
+                            allowfullscreen></iframe>
+                        <!-- Replace src with your actual video file -->
+                        <video controls id="gravity-jump-vid">
+                            <source src="GRAVITY/Gravity Games_ How Planet Size Changes Weight, Jumping, and Physical Force.mp4"
+                                type="video/mp4">
+                            <!-- Native captions track -->
+                            <track kind="captions" label="English" srclang="en" src="captions.vtt" default>
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">Gravity Games</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("video").forEach(vid => {
+                vid.removeAttribute("controls");
+                vid.style.cursor = "pointer";
+
+                const playBtn = document.createElement("div");
+                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="white" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`;
+                playBtn.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.8)); opacity: 0.9;";
+
+                vid.parentElement.appendChild(playBtn);
+
+                const setMidFrame = () => {
+                    if (vid.duration) {
+                        vid.currentTime = vid.duration * (0.2 + 0.6 * Math.random());
+                    }
+                };
+                if (vid.readyState >= 1) {
+                    setMidFrame();
+                } else {
+                    vid.addEventListener("loadedmetadata", setMidFrame, { once: true });
+                }
+
+                let simId = vid.id ? vid.id.replace("-vid", "-sim") : null;
+                const sim = simId ? document.getElementById(simId) : null;
+
+                if (sim) {
+                    // Move to body ONCE during setup to escape CSS clipping boundaries.
+                    // Moving iframes causes them to reload, so doing it once prevents flickering!
+                    document.body.appendChild(sim);
+
+                    const startSimulation = (e) => {
+                        // FIX: If the video already has native controls active and was clicked, ignore it. 
+                        // Let the browser natively pause/play.
+                        if (e && e.target === vid && vid.hasAttribute("controls")) return;
+
+                        vid.style.display = "none";
+                        playBtn.style.display = "none";
+
+                        sim.style.display = "block";
+
+                        // Fake Full Screen with CSS
+                        sim.style.position = 'fixed';
+                        sim.style.top = '0';
+                        sim.style.left = '0';
+                        sim.style.width = '100vw';
+                        sim.style.height = '100vh';
+                        sim.style.zIndex = '999999';
+                    };
+
+                    playBtn.addEventListener("click", startSimulation);
+                    vid.addEventListener("click", startSimulation);
+
+                    window.addEventListener("message", (event) => {
+                        if (event.data === 'playVideo') {
+                            // Only affect active simulation
+                            if (sim.style.display !== "block") return;
+
+                            // Exit CSS fullscreen
+                            sim.style.display = "none";
+                            sim.style.position = '';
+                            sim.style.top = '';
+                            sim.style.left = '';
+                            sim.style.width = '100%';
+                            sim.style.height = '100%';
+                            sim.style.zIndex = '';
+
+                            // Play video
+                            vid.style.display = "block";
+                            if (!vid.dataset.started) {
+                                vid.currentTime = 0;
+                                vid.dataset.started = "true";
+                                vid.setAttribute("controls", "controls");
+                                vid.play();
+                            }
+                        }
+                    });
+
+                    vid.addEventListener("ended", () => {
+                        let endButtonsId = vid.id + "-end-buttons";
+                        let endButtonsContainer = document.getElementById(endButtonsId);
+                        if (!endButtonsContainer) {
+                            endButtonsContainer = document.createElement("div");
+                            endButtonsContainer.id = endButtonsId;
+                            endButtonsContainer.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; gap: 20px; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.4);";
+
+                            // Create Replay Sim Button
+                            let replaySimBtn = document.createElement("button");
+                            replaySimBtn.className = "btn";
+                            replaySimBtn.style.cssText = "font-family: 'Walter Turncoat', cursive; font-size: 1.5rem; background-color: #d2f3fd; border: 3px solid #5a4b3c; border-radius: 10px; color: #5a4b3c; padding: 10px 20px; box-shadow: 0px 5px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s;";
+                            replaySimBtn.innerText = "Play Game Again";
+
+                            // Create Lesson Learnt Button
+                            let lessonBtn = document.createElement("button");
+                            lessonBtn.className = "btn";
+                            lessonBtn.style.cssText = "font-family: 'Walter Turncoat', cursive; font-size: 1.5rem; background-color: #f8e5b4; border: 3px solid #5a4b3c; border-radius: 10px; color: #5a4b3c; padding: 10px 20px; box-shadow: 0px 5px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s;";
+                            lessonBtn.innerText = "Lesson Learnt!";
+
+                            endButtonsContainer.appendChild(replaySimBtn);
+                            endButtonsContainer.appendChild(lessonBtn);
+                            vid.parentElement.appendChild(endButtonsContainer);
+
+                            lessonBtn.addEventListener("click", () => {
+                                // go back to normal library state
+                                endButtonsContainer.style.display = "none";
+
+                                vid.style.display = "block";
+                                vid.removeAttribute("controls");
+                                vid.dataset.started = "";
+                                setMidFrame();
+                                playBtn.style.display = "block";
+                            });
+
+                            replaySimBtn.addEventListener("click", () => {
+                                endButtonsContainer.style.display = "none";
+                                startSimulation(null);
+                            });
+                        }
+
+                        // Show container
+                        endButtonsContainer.style.display = "flex";
+                    });
+                } else {
+                    const startVideo = () => {
+                        if (!vid.dataset.started) {
+                            vid.currentTime = 0;
+                            vid.dataset.started = "true";
+                            vid.setAttribute("controls", "controls");
+                            playBtn.style.display = "none";
+                            vid.play();
+                        }
+                    };
+
+                    playBtn.addEventListener("click", startVideo);
+                    vid.addEventListener("click", startVideo);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fever Temperature Simulation</title>
+  <style>
+    /* --- Global Aesthetics --- */
+    body {
+      font-family: 'Nunito', 'Comic Sans MS', sans-serif;
+      background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      user-select: none;
+      color: #333;
+      transform: scale(1.3);
+      transform-origin: center;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: white;
+      text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.5rem;
+      background: white;
+      padding: 10px 30px;
+      border-radius: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      color: #5e35b1;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+
+    /* --- Layout --- */
+    .clinic-room {
+      display: flex;
+      gap: 80px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.4);
+      padding: 50px;
+      border-radius: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border: 4px solid white;
+    }
+
+    /* --- Patient Bed (Drop Zone) --- */
+    .patient-bed {
+      width: 250px;
+      height: 300px;
+      background: white;
+      border-radius: 30px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 5px dashed #ff8a80;
+      /* Soft red pulsating glow to imply FEVER */
+      animation: feverGlow 2s infinite alternate;
+    }
+
+    @keyframes feverGlow {
+      0% {
+        box-shadow: 0 0 10px rgba(255, 82, 82, 0.2);
+      }
+
+      100% {
+        box-shadow: 0 0 40px rgba(255, 82, 82, 0.8);
+      }
+    }
+
+    .patient-bed.drag-over {
+      transform: scale(1.05);
+      background: #ffebee;
+      border-style: solid;
+    }
+
+    /* Styles for your PNG */
+    .patient-img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      pointer-events: none;
+      /* Prevents dragging the image itself */
+      z-index: 2;
+    }
+
+    /* --- Highly Aesthetic Thermometer --- */
+    .thermometer-container {
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: transform 0.2s;
+    }
+
+    .thermometer-container:active {
+      cursor: grabbing;
+      transform: rotate(15deg) scale(1.1);
+    }
+
+    .glass-tube {
+      width: 40px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 4px solid #b0bec5;
+      border-bottom: none;
+      border-radius: 20px 20px 0 0;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.1), 5px 5px 15px rgba(0, 0, 0, 0.2);
+      z-index: 2;
+    }
+
+    .bulb {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle at 30% 30%, #ff5252, #c62828);
+      border: 4px solid #b0bec5;
+      border-radius: 50%;
+      margin-top: -10px;
+      z-index: 3;
+      box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.3), 5px 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* The Red Liquid */
+    .liquid-track {
+      width: 14px;
+      height: 90%;
+      background: #eeeeee;
+      position: absolute;
+      bottom: 0;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .red-liquid {
+      width: 100%;
+      height: 15%;
+      /* Starts low (Room Temp) */
+      background: linear-gradient(to right, #ff5252, #d32f2f);
+      border-radius: 10px 10px 0 0;
+      transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Measurement Marks */
+    .marks {
+      position: absolute;
+      left: 32px;
+      height: 85%;
+      bottom: 10px;
+      width: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .mark {
+      width: 10px;
+      height: 2px;
+      background: #90a4ae;
+    }
+
+    .mark.danger {
+      background: #d32f2f;
+      width: 15px;
+    }
+
+    /* --- Buttons and UI --- */
+    .reset-btn {
+      margin-top: 40px;
+      padding: 15px 40px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      background: #4fc3f7;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #0288d1, 0 10px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.1s;
+    }
+
+    .reset-btn:active {
+      transform: translateY(6px);
+      box-shadow: 0 0px 0 #0288d1, 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Why though button */
+    #why-though-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-family: inherit;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background-color: #f8e5b4;
+      border: 3px solid #5a4b3c;
+      border-radius: 10px;
+      color: #5a4b3c;
+      padding: 10px 20px;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      z-index: 60;
+      transition: transform 0.2s;
+      display: none;
+    }
+
+    #why-though-btn:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Doctor's Office 🩺</h1>
+  <div class="subtitle" id="status-text">Drag the thermometer to check the boy!</div>
+
+  <div class="clinic-room">
+
+    <div class="patient-bed" id="patient-dropzone">
+
+      <img src="images/sick-boy-with-fever-in-bed-illustration-svg-download-png-13073113.png" class="patient-img"
+        alt="Sick Boy">
+
+    </div>
+
+    <div class="thermometer-container" id="thermometer" draggable="true">
+      <div class="glass-tube">
+        <div class="liquid-track">
+          <div class="red-liquid" id="red-liquid"></div>
+        </div>
+        <div class="marks">
+          <div class="mark danger"></div>
+          <div class="mark"></div>
+          <div class="mark"></div>
+          <div class="mark"></div>
+          <div class="mark"></div>
+        </div>
+      </div>
+      <div class="bulb"></div>
+    </div>
+
+  </div>
+
+  <button class="reset-btn" onclick="resetSim()">Check Another Patient</button>
+  <button id="why-though-btn">Why though?</button>
+
+  <script>
+    // DOM Elements
+    const thermometer = document.getElementById('thermometer');
+    const dropzone = document.getElementById('patient-dropzone');
+    const redLiquid = document.getElementById('red-liquid');
+    const statusText = document.getElementById('status-text');
+
+    let temperatureChecked = false;
+
+    // 1. Drag Start
+    thermometer.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', 'thermometer');
+      setTimeout(() => { thermometer.style.opacity = '0.5'; }, 0);
+    });
+
+    // Drag End
+    thermometer.addEventListener('dragend', () => {
+      thermometer.style.opacity = '1';
+    });
+
+    // 2. Drag Over Dropzone
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault(); // Allows drop
+      if (!temperatureChecked) {
+        dropzone.classList.add('drag-over');
+      }
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag-over');
+    });
+
+    // 3. Drop Action
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-over');
+
+      if (!temperatureChecked) {
+        checkTemperature();
+      }
+    });
+
+    // 4. The Fever Logic
+    function checkTemperature() {
+      temperatureChecked = true;
+      statusText.innerText = "Checking temperature... ⏳";
+
+      // Simulate the time it takes to read temperature
+      setTimeout(() => {
+        // Rise to fever level (85% height)
+        redLiquid.style.height = '85%';
+
+        setTimeout(() => {
+          statusText.style.color = "#d32f2f";
+          statusText.innerText = "Oh no! 102°F - He has a fever! 🌡️🔥";
+          document.getElementById('why-though-btn').style.display = 'block';
+        }, 1500); // Wait for liquid to rise before updating text
+
+      }, 500);
+    }
+
+    // 5. Reset
+    function resetSim() {
+      temperatureChecked = false;
+      redLiquid.style.height = '15%'; // Back to room temp
+      statusText.style.color = "#5e35b1";
+      statusText.innerText = "Drag the thermometer to check the boy!";
+      document.getElementById('why-though-btn').style.display = 'none';
+    }
+
+    // Notify parent when user is done
+    document.getElementById('why-though-btn').addEventListener('click', () => {
+      window.parent.postMessage('playVideo', '*');
+    });
+  </script>
+
+</body>
+
+</html>

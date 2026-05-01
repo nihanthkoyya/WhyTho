@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Jump Sandbox</title>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --ground: #fbbf24;
+            --accent: #8b5cf6;
+            --text: #f8fafc;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .slider-container {
+            margin-top: 15px;
+        }
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+        .labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        canvas { touch-action: none; }
+        h1 { margin: 0; font-size: 1.5rem; }
+        #gValue { color: var(--ground); font-size: 1.8rem; display: block; margin: 5px 0; }
+
+        #why-though-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: 'Walter Turncoat', cursive;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #f8e5b4;
+            border: 3px solid #5a4b3c;
+            border-radius: 10px;
+            color: #5a4b3c;
+            padding: 10px 20px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            cursor: pointer;
+            z-index: 60;
+            transition: transform 0.2s, opacity 0.5s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #why-though-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #why-though-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1>Gravity: <span id="gDisplay">Earth</span></h1>
+        <b id="gValue">9.8</b>
+        <div class="slider-container">
+            <input type="range" id="gravitySlider" min="1" max="30" step="0.1" value="9.8">
+            <div class="labels">
+                <span>Low (Floaty)</span>
+                <span>Earth</span>
+                <span>High (Heavy)</span>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <button id="why-though-btn">Why though?</button>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('gravitySlider');
+    const gValue = document.getElementById('gValue');
+    const gDisplay = document.getElementById('gDisplay');
+    const whyBtn = document.getElementById('why-though-btn');
+
+    let width, height, groundY;
+    let gravity = 9.8;
+    const jumpForce = 12; // Base jump strength
+    const peopleCount = 5;
+    let people = [];
+
+    function init() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        groundY = height - 100;
+        
+        // Initialize people with staggered positions
+        people = [];
+        for (let i = 0; i < peopleCount; i++) {
+            people.push({
+                x: (width / (peopleCount + 1)) * (i + 1),
+                y: groundY,
+                vy: 0,
+                color: `hsl(${i * 60}, 70%, 60%)`,
+                emoji: ['🏃', '💃', '🧍', '🤸', '🕴️'][i]
+            });
+        }
+    }
+
+    function update() {
+        gravity = parseFloat(slider.value);
+        gValue.innerText = gravity.toFixed(1);
+
+        // Label update
+        if (gravity < 5) gDisplay.innerText = "Moon (Light)";
+        else if (gravity > 15) gDisplay.innerText = "Jupiter (Heavy)";
+        else gDisplay.innerText = "Earth (Normal)";
+
+        people.forEach(p => {
+            // Apply Gravity (adjusted for frame rate feel)
+            p.vy += (gravity * 0.05);
+            p.y += p.vy;
+
+            // Collision with ground
+            if (p.y >= groundY) {
+                p.y = groundY;
+                // Auto-jump when hitting ground
+                // We use a fixed jumpForce, gravity determines the arc
+                p.vy = -jumpForce; 
+            }
+        });
+    }
+
+    function draw() {
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Ground
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.roundRect(0, groundY + 10, width, height - groundY, [20, 20, 0, 0]);
+        ctx.fill();
+
+        // Draw People
+        people.forEach(p => {
+            ctx.font = "50px serif";
+            ctx.textAlign = "center";
+            // Shadow for depth
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            const shadowSize = Math.max(10, 30 - (groundY - p.y) * 0.1);
+            ctx.beginPath();
+            ctx.ellipse(p.x, groundY + 20, shadowSize, shadowSize/3, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // Draw Emoji
+            ctx.fillText(p.emoji, p.x, p.y);
+        });
+
+        update();
+        requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', init);
+    init();
+    draw();
+
+    // Show 'Why though?' button after 5 seconds to prompt returning to video
+    setTimeout(() => {
+        whyBtn.classList.add('visible');
+    }, 5000);
+
+    whyBtn.addEventListener('click', () => {
+        window.parent.postMessage('playVideo', '*');
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Chapter - Inverted Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Margarine&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@1,529&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Flavors&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="CSS/styles.css">
+</head>
+
+<body class="chapter-index inverted-chapter">
+
+    <nav class="navbar navbar-expand-lg navigation-bar ">
+        <li class="navbar-brand brand">
+            <a class="nav-link" href="/index.html"><img src="images/favicon-32x32.png" alt="icon">WhyTho</a>
+        </li>
+        <ul class="navbar-nav ms-auto bundle-nav">
+            <li class="nav-item">
+                <a class="nav-link link-nav" href="">contact</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link link-nav" href="">about</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href=""><button type="button" class="btn btn-light">Sign In</button></a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Title -->
+    <h1 class="lets-go mb-5 heat-title">Current</h1>
+
+    <!-- Minimalistic Video Library Grid -->
+    <div class="container pb-5">
+        <div class="row g-5 justify-content-center">
+
+            <!-- Video Item 1 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-left">
+                    <div class="inverted-tape"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Replace src with your actual video file -->
+                        <video controls>
+                            <source src="videos/01_what_is_temperature.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">1. Temperature & Particles</div>
+                </div>
+            </div>
+
+            <!-- Video Item 2 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-right">
+                    <div class="inverted-tape tape-alt"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Replace src with your actual video file -->
+                        <video controls>
+                            <source src="videos/02_conduction_convection.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">2. How Heat Moves</div>
+                </div>
+            </div>
+
+            <!-- Video Item 3 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-left">
+                    <div class="inverted-tape tape-alt-2"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Replace src with your actual video file -->
+                        <video controls>
+                            <source src="videos/03_thermal_radiation.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">3. Invisible Heat Waves</div>
+                </div>
+            </div>
+
+            <!-- Video Item 4 -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="video-card rotation-right">
+                    <div class="inverted-tape"></div>
+                    <div class="ratio ratio-16x9 placeholder-video-wrapper">
+                        <!-- Replace src with your actual video file -->
+                        <video controls>
+                            <source src="videos/04_phase_changes.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div class="video-title">4. Melting & Boiling</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("video").forEach(vid => {
+                vid.removeAttribute("controls");
+                vid.style.cursor = "pointer";
+                
+                const playBtn = document.createElement("div");
+                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="white" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`;
+                playBtn.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: pointer; z-index: 10; filter: drop-shadow(0px 0px 10px rgba(0,0,0,0.8)); opacity: 0.9;";
+                
+                vid.parentElement.appendChild(playBtn);
+                
+                const setMidFrame = () => {
+                    vid.currentTime = vid.duration * (0.2 + 0.6 * Math.random());
+                };
+                if (vid.readyState >= 1) {
+                    setMidFrame();
+                } else {
+                    vid.addEventListener("loadedmetadata", setMidFrame);
+                }
+                
+                const startVideo = () => {
+                    if (!vid.dataset.started) {
+                        vid.currentTime = 0;
+                        vid.dataset.started = "true";
+                        vid.setAttribute("controls", "controls");
+                        playBtn.style.display = "none";
+                        vid.play();
+                    }
+                };
+                
+                playBtn.addEventListener("click", startVideo);
+                vid.addEventListener("click", startVideo);
+            });
+        });
+    </script>
+</body>
+
+</html>

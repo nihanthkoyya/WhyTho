@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What is Heat Simulation</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+  
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Why though button */
+  #why-though-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-family: inherit;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #f8e5b4;
+    border: 3px solid #5a4b3c;
+    border-radius: 10px;
+    color: #5a4b3c;
+    padding: 10px 20px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    cursor: pointer;
+    z-index: 60;
+    transition: transform 0.2s, opacity 0.5s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #why-though-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #why-though-btn:hover {
+    transform: scale(1.05);
+  }
+</style>
+<!-- Add the font for the button to match -->
+<link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
+<style>
+  #why-though-btn {
+    font-family: 'Walter Turncoat', cursive;
+  }
+</style>
+</head>
+<body>
+
+<iframe src="https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_en.html" allowfullscreen></iframe>
+
+<button id="why-though-btn">Why though?</button>
+
+<script>
+  const btn = document.getElementById('why-though-btn');
+
+  // Fade in the button after 5 seconds of the simulation being open
+  setTimeout(() => {
+    btn.classList.add('visible');
+  }, 5000);
+
+  // Notify parent when user is done
+  btn.addEventListener('click', () => {
+    window.parent.postMessage('playVideo', '*');
+  });
+</script>
+
+</body>
+</html>
