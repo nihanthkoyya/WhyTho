@@ -4,274 +4,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What's Holding It Up?</title>
+    <title>WhyTho: Fun Fly</title>
     <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
     <style>
         :root {
-            --sky: #00144f;
-            --bus: #ffca28;
-            --wing: #90a4ae;
-            --accent: #26a69a;
+            --sky: #0a0e1a;
+            --bus: #ffcc00;
         }
 
-        body {
+        body,
+        html {
             margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--sky);
+            overflow: hidden;
+            font-family: 'Walter Turncoat', cursive;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: var(--sky);
-            font-family: system-ui, sans-serif;
-            overflow: hidden;
-            color: #37474f;
         }
 
-        #ui {
-            position: absolute;
-            bottom: 30px;
-            display: flex;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        button {
-            padding: 15px 25px;
-            font-size: 1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-wing {
-            background: var(--wing);
-            color: white;
-        }
-
-        .btn-engine {
-            background: var(--accent);
-            color: white;
-        }
-
-        button:active {
-            transform: scale(0.95);
-        }
-
-        .active {
-            outline: 4px solid white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        #msg {
+        #text-box {
             position: absolute;
             top: 50px;
             text-align: center;
+            color: white;
+            z-index: 100;
             pointer-events: none;
         }
 
-        #why-though-btn {
+        .ui {
+            position: absolute;
+            bottom: 50px;
+            display: flex;
+            gap: 30px;
+            z-index: 100;
+        }
+
+        .btn {
+            background: #ffffff;
+            color: #333;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Walter Turncoat';
+            transition: 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn.on {
+            background: var(--bus);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+        }
+
+        #why {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            font-family: 'Walter Turncoat', cursive;
-            font-size: 1.5rem;
-            font-weight: bold;
-            background-color: #f8e5b4;
+            background: #f8e5b4;
+            color: #5a4b3c;
             border: 3px solid #5a4b3c;
             border-radius: 10px;
-            color: #5a4b3c;
-            padding: 10px 20px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            padding: 12px 24px;
             cursor: pointer;
-            z-index: 60;
-            transition: transform 0.2s, opacity 0.5s;
-            opacity: 0;
-            pointer-events: none;
+            z-index: 100;
         }
 
-        #why-though-btn.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #why-though-btn:hover {
-            transform: scale(1.05);
+        canvas {
+            display: block;
         }
     </style>
-    <script src="sound_fx.js"></script>
 </head>
 
 <body>
 
-    <div id="msg">
-        <h2 id="status">The bus is stationary.</h2>
-        <p>Add wings and moving air to fly!</p>
+    <div id="text-box">
+        <h1 id="top-text">Ready to play!</h1>
+        <p id="bottom-text">Put on wings and go fast!</p>
     </div>
 
-    <canvas id="sim"></canvas>
-
-    <div id="ui">
-        <button id="wingBtn" class="btn-wing">Attach Wings</button>
-        <button id="engineBtn" class="btn-engine">Start Engine</button>
+    <div class="ui">
+        <button id="wBtn" class="btn">Wings</button>
+        <button id="eBtn" class="btn">Start</button>
     </div>
 
-    <button id="why-though-btn">Why though?</button>
+    <button id="why">WHY?</button>
+
+    <canvas id="canvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('sim');
+        const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const wingBtn = document.getElementById('wingBtn');
-        const engineBtn = document.getElementById('engineBtn');
-        const statusText = document.getElementById('status');
-        const whyBtn = document.getElementById('why-though-btn');
+        const audio = new (window.AudioContext || window.webkitAudioContext)();
 
-        let width, height;
-        let hasWings = false;
-        let engineOn = false;
+        let w, h, wings = false, motor = false;
+        let roadX = 0, speed = 0;
+        let stars = [], particles = [];
 
-        // Physics State
-        let bus = {
-            x: 0,
-            y: 0,
-            w: 120,
-            h: 60,
+        const bus = {
+            w: 200, h: 100,
+            x: 0, y: 0,
             targetY: 0,
-            velocity: 0
+            flap: 0
         };
 
-        let particles = [];
-
         function init() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            bus.x = width / 2 - bus.w / 2;
-            bus.y = height - 150;
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            bus.x = w * 0.2;
+            bus.y = h - 220;
             bus.targetY = bus.y;
+            stars = Array.from({ length: 40 }, () => ({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                s: 2 + Math.random() * 5
+            }));
         }
 
-        function createParticle() {
-            if (!engineOn) return;
-            particles.push({
-                x: width,
-                y: Math.random() * height,
-                speed: 10 + Math.random() * 10,
-                len: 20 + Math.random() * 30
-            });
+        function play(f, type = 'sine') {
+            if (audio.state === 'suspended') audio.resume();
+            const o = audio.createOscillator(), g = audio.createGain();
+            o.type = type; o.frequency.setValueAtTime(f, audio.currentTime);
+            g.gain.setValueAtTime(0.8, audio.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 0.3);
+            o.connect(g); g.connect(audio.destination);
+            o.start(); o.stop(audio.currentTime + 0.3);
         }
 
         function update() {
-            // Logic: Wings + Engine = Lift
-            if (hasWings && engineOn) {
-                bus.targetY = height / 2;
-                statusText.innerText = "We have LIFT! Air is pushing the wings up.";
-            } else if (hasWings && !engineOn) {
-                bus.targetY = height - 150;
-                statusText.innerText = "Wings added, but the air isn't moving.";
-            } else if (!hasWings && engineOn) {
-                bus.targetY = height - 150;
-                statusText.innerText = "Engine is on, but there's nothing to catch the air.";
+            // Speed
+            let targetS = motor ? 25 : 0;
+            speed += (targetS - speed) * 0.03;
+
+            // Lift
+            let fly = motor && wings;
+            bus.targetY = fly ? h * 0.4 : h - 220;
+            bus.y += (bus.targetY - bus.y) * 0.04;
+
+            // Flapping "Slap" Motion
+            if (motor && wings) {
+                bus.flap = Math.sin(Date.now() * 0.015) * 40;
             } else {
-                bus.targetY = height - 150;
-                statusText.innerText = "Add wings and move the air!";
+                bus.flap = 0;
             }
 
-            // Smooth movement
-            bus.y += (bus.targetY - bus.y) * 0.05;
+            // Move Environment
+            roadX = (roadX - speed) % 100;
+            stars.forEach(s => {
+                s.x -= speed * (s.s / 10);
+                if (s.x < -10) s.x = w + 10;
+            });
 
-            // Particles
-            if (engineOn && Math.random() > 0.5) createParticle();
+            // Smoke
+            if (motor && Math.random() > 0.5) {
+                particles.push({ x: bus.x, y: bus.y + bus.h - 20, vx: -5 - Math.random() * 5, a: 1 });
+            }
             particles.forEach((p, i) => {
-                p.x -= p.speed;
-                if (p.x < -50) particles.splice(i, 1);
+                p.x += p.vx; p.a -= 0.02;
+                if (p.a <= 0) particles.splice(i, 1);
             });
         }
 
         function draw() {
-            ctx.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, w, h);
 
-            // Draw Wind Particles
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.lineWidth = 2;
-            particles.forEach(p => {
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p.x + p.len, p.y);
-                ctx.stroke();
+            // Boring Stars
+            ctx.fillStyle = "white";
+            stars.forEach(s => {
+                ctx.fillRect(s.x, s.y, 2, 2);
             });
 
-            // Draw Ground
-            ctx.fillStyle = "#cfd8dc";
-            ctx.fillRect(0, height - 100, width, 100);
-
-            // Draw Wings (if attached)
-            if (hasWings) {
-                ctx.fillStyle = "#90a4ae";
-                // Simple wing shape
+            // Ground Lines
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.lineWidth = 6;
+            for (let i = -100; i < w + 100; i += 100) {
                 ctx.beginPath();
-                ctx.roundRect(bus.x - 40, bus.y + 20, 200, 15, 10);
-                ctx.fill();
+                ctx.moveTo(i + roadX, h - 100);
+                ctx.lineTo(i + roadX + 40, h - 100);
+                ctx.stroke();
             }
 
-            // Draw Bus
-            ctx.fillStyle = "#ffca28";
+            // Smoke
+            particles.forEach(p => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.a})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // THE BUS
+            const bx = bus.x, by = bus.y + (Math.sin(Date.now() * 0.004) * 8);
+
+            // Slapping Wings
+            if (wings) {
+                ctx.fillStyle = "#888";
+                // Left
+                ctx.save();
+                ctx.translate(bx + 50, by + 40);
+                ctx.rotate(bus.flap * Math.PI / 180);
+                ctx.fillRect(-80, -10, 80, 20);
+                ctx.restore();
+                // Right
+                ctx.save();
+                ctx.translate(bx + bus.w - 50, by + 40);
+                ctx.rotate(-bus.flap * Math.PI / 180);
+                ctx.fillRect(0, -10, 80, 20);
+                ctx.restore();
+            }
+
+            // Big Body
+            ctx.fillStyle = "#ffcc00";
             ctx.beginPath();
-            ctx.roundRect(bus.x, bus.y, bus.w, bus.h, 10);
+            ctx.roundRect(bx, by, bus.w, bus.h, 15);
             ctx.fill();
 
             // Windows
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(bus.x + 10, bus.y + 10, 25, 20);
-            ctx.fillRect(bus.x + 45, bus.y + 10, 25, 20);
-            ctx.fillRect(bus.x + 80, bus.y + 10, 30, 20);
+            ctx.fillStyle = motor ? "#00f2ff" : "#fff";
+            for (let i = 0; i < 3; i++) {
+                ctx.roundRect(bx + 20 + (i * 55), by + 15, 45, 40, 8);
+                ctx.fill();
+            }
 
             // Wheels
-            ctx.fillStyle = "#37474f";
-            ctx.beginPath();
-            ctx.arc(bus.x + 30, bus.y + bus.h, 12, 0, Math.PI * 2);
-            ctx.arc(bus.x + 90, bus.y + bus.h, 12, 0, Math.PI * 2);
-            ctx.fill();
-
-            requestAnimationFrame(() => {
-                update();
-                draw();
+            ctx.fillStyle = "#222";
+            [40, bus.w - 40].forEach(o => {
+                ctx.beginPath();
+                ctx.arc(bx + o, by + bus.h, 22, 0, Math.PI * 2);
+                ctx.fill();
             });
+
+            requestAnimationFrame(() => { update(); draw(); });
         }
 
-        wingBtn.addEventListener('click', () => {
-            hasWings = !hasWings;
-            wingBtn.classList.toggle('active');
-            wingBtn.innerText = hasWings ? "Remove Wings" : "Attach Wings";
-        });
+        // Logic
+        document.getElementById('wBtn').onclick = (e) => {
+            wings = !wings;
+            e.target.classList.toggle('on');
+            play(wings ? 400 : 200);
+            updateLabels();
+        };
 
-        engineBtn.addEventListener('click', () => {
-            engineOn = !engineOn;
-            engineBtn.classList.toggle('active');
-            engineBtn.innerText = engineOn ? "Stop Engine" : "Start Engine";
-            if (engineOn && window.SoundFX) SoundFX.playWoosh();
-        });
+        document.getElementById('eBtn').onclick = (e) => {
+            motor = !motor;
+            e.target.classList.toggle('on');
+            e.target.innerText = motor ? "Stop" : "Start";
+            play(motor ? 150 : 75, 'sawtooth');
+            updateLabels();
+        };
 
-        window.addEventListener('resize', init);
-        init();
-        draw();
+        function updateLabels() {
+            const t = document.getElementById('top-text');
+            const b = document.getElementById('bottom-text');
+            if (wings && motor) { t.innerText = "WE ARE FLYING!"; b.innerText = "The wind is pushing us up!"; }
+            else if (motor) { t.innerText = "Going fast!"; b.innerText = "But we need wings to fly."; }
+            else if (wings) { t.innerText = "Wings are on!"; b.innerText = "Now we need to go fast!"; }
+            else { t.innerText = "Ready to play!"; b.innerText = "Put on wings and go fast!"; }
+        }
 
-        // Show 'Why though?' button after 5 seconds to prompt returning to video
-        setTimeout(() => {
-            whyBtn.classList.add('visible');
-        }, 5000);
-
-        whyBtn.addEventListener('click', () => {
-            window.parent.postMessage('playVideo', '*');
-        });
+        window.onresize = init;
+        init(); draw();
     </script>
 </body>
 
 </html>
-

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,271 +8,261 @@
     <link href="https://fonts.googleapis.com/css2?family=Walter+Turncoat&display=swap" rel="stylesheet">
     <style>
         :root {
-            --space: #1a1a2e;
-            --earth: #4da6ff;
-            --land: #81c784;
+            --bg: #0b0d17;
+            --accent: #4da6ff;
+            --ui-bg: rgba(255, 255, 255, 0.1);
         }
-        body {
+
+        body,
+        html {
             margin: 0;
-            background: var(--space);
-            overflow: hidden;
-            font-family: system-ui, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
             color: white;
+            font-family: 'Walter Turncoat', cursive;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        #instructions {
+
+        #earth-globe {
+            position: absolute;
+            height: 90vh;
+            z-index: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .spawn-dock {
             position: absolute;
             top: 20px;
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-        }
-        canvas { touch-action: none; }
-        .controls {
-            position: absolute;
-            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            gap: 10px;
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        .item-btn {
-            background: white;
-            border: none;
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .item-btn:active { transform: scale(0.9); }
-
-        #why-though-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            font-family: 'Walter Turncoat', cursive;
-            font-size: 1.5rem;
-            font-weight: bold;
-            background-color: #f8e5b4;
-            border: 3px solid #5a4b3c;
-            border-radius: 10px;
-            color: #5a4b3c;
+            gap: 15px;
+            background: var(--ui-bg);
             padding: 10px 20px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .spawn-btn {
+            background: none;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
             cursor: pointer;
-            z-index: 60;
-            transition: transform 0.2s, opacity 0.5s;
-            opacity: 0;
+            transition: 0.2s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spawn-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .bottom-controls {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             pointer-events: none;
         }
-        #why-though-btn.visible {
-            opacity: 1;
+
+        #reset-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-family: 'Walter Turncoat', cursive;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #why-btn {
+            position: absolute;
+            right: 20px;
+            background: #f8e5b4;
+            color: #5a4b3c;
+            border: 3px solid #5a4b3c;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-family: 'Walter Turncoat', cursive;
+            cursor: pointer;
             pointer-events: auto;
         }
-        #why-though-btn:hover {
-            transform: scale(1.05);
-        }
     </style>
-    <script src="sound_fx.js"></script>
 </head>
+
 <body>
 
-    <div id="instructions">
-        <h1>The Great Pull</h1>
-        <p>Pick an item and drop it in space!</p>
-    </div>
+    <img id="earth-globe" src="images/happy-cartoon-earth-globe-png.png" alt="Earth">
 
     <canvas id="canvas"></canvas>
 
-    <div class="controls">
-        <button class="item-btn" onclick="spawn('🍎')">🍎</button>
-        <button class="item-btn" onclick="spawn('👨🚀')">👨🚀</button>
-        <button class="item-btn" onclick="spawn('🛰️')">🛰️</button>
-        <button class="item-btn" onclick="spawn('☄️')">☄️</button>
+    <div class="ui-layer">
+        <div class="spawn-dock">
+            <button class="spawn-btn" onclick="spawn('🍎')">🍎</button>
+            <button class="spawn-btn" onclick="spawn('☄️')">☄️</button>
+            <button class="spawn-btn" onclick="spawn('🛸')">🛸</button>
+            <button class="spawn-btn" onclick="spawn('🧍')">🧍</button>
+        </div>
+
+        <div class="bottom-controls">
+            <button id="reset-btn" onclick="resetSim()">do again 🔄</button>
+            <button id="why-btn">WHY?</button>
+        </div>
     </div>
 
-    <button id="why-though-btn">Why though?</button>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let width, height, centerX, centerY, earthRadius;
+        let objects = [];
 
-<script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Sound effect for interaction
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-    function playDragSound() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    }
-
-    let width, height, centerX, centerY;
-    let objects = [];
-    let draggingObj = null;
-
-    let earthRadius = 60;
-    const gravityStrength = 0.5;
-
-    function init() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-        centerX = width / 2;
-        centerY = height / 2;
-        
-        // Maximize earth size without overlapping top spawn area/instructions (160px margin) 
-        // and bottom controls (120px margin)
-        let maxRfromHeight = (height - 160 - 120) / 2;
-        let maxRfromWidth = (width - 100) / 2;
-        earthRadius = Math.max(60, Math.min(maxRfromWidth, maxRfromHeight));
-    }
-
-    class GravityObject {
-        constructor(x, y, emoji) {
-            this.x = x;
-            this.y = y;
-            this.emoji = emoji;
-            this.vx = 0;
-            this.vy = 0;
-            this.isStuck = false;
-            this.size = 30;
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+            earthRadius = (height * 0.9) / 2.3;
         }
 
-        update() {
-            if (this === draggingObj || this.isStuck) return;
+        // Sound Engine
+        function playFallSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1);
 
-            // Vector to Earth center
-            const dx = centerX - this.x;
-            const dy = centerY - this.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Max Volume
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
 
-            if (distance < earthRadius + 10) {
-                this.isStuck = true;
-                return;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1);
+        }
+
+        function playHitSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Max Volume
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        class FallingObject {
+            constructor(x, y, emoji) {
+                this.x = x;
+                this.y = y;
+                this.emoji = emoji;
+                this.size = 40;
+                this.speed = 3 + Math.random() * 2;
+                this.stuck = false;
+                this.angle = Math.atan2(centerY - this.y, centerX - this.x);
+                playFallSound();
             }
 
-            // Normalizing and applying gravity
-            this.vx += (dx / distance) * gravityStrength;
-            this.vy += (dy / distance) * gravityStrength;
+            update() {
+                if (this.stuck) return;
 
-            // Friction/Damping
-            this.vx *= 0.98;
-            this.vy *= 0.98;
+                const dx = centerX - this.x;
+                const dy = centerY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
 
-            this.x += this.vx;
-            this.y += this.vy;
-        }
+                if (distance < earthRadius) {
+                    this.stuck = true;
+                    playHitSound();
+                    return;
+                }
 
-        draw() {
-            ctx.font = `${this.size}px serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(this.emoji, this.x, this.y);
-        }
-    }
-
-    function spawn(emoji) {
-        // Spawn at random top location
-        const obj = new GravityObject(Math.random() * width, 100, emoji);
-        objects.push(obj);
-    }
-
-    function draw() {
-        ctx.fillStyle = "#1a1a2e";
-        ctx.fillRect(0, 0, width, height);
-
-        // Atmosphere Glow
-        const gradient = ctx.createRadialGradient(centerX, centerY, earthRadius, centerX, centerY, earthRadius + 40);
-        gradient.addColorStop(0, 'rgba(77, 166, 255, 0.3)');
-        gradient.addColorStop(1, 'rgba(77, 166, 255, 0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, earthRadius + 40, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Earth
-        ctx.fillStyle = "#4da6ff";
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, earthRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Simple Land Detail scaled up to match earth radius
-        const scale = earthRadius / 60;
-        ctx.fillStyle = "#81c784";
-        ctx.beginPath();
-        ctx.arc(centerX - 15 * scale, centerY - 10 * scale, 25 * scale, 0, Math.PI * 2);
-        ctx.arc(centerX + 20 * scale, centerY + 15 * scale, 20 * scale, 0, Math.PI * 2);
-        ctx.fill();
-
-        objects.forEach(obj => {
-            obj.update();
-            obj.draw();
-        });
-
-        requestAnimationFrame(draw);
-    }
-
-    // Interaction Logic
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('mousemove', drag);
-    canvas.addEventListener('mouseup', endDrag);
-    canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0]));
-    canvas.addEventListener('touchmove', (e) => drag(e.touches[0]));
-    canvas.addEventListener('touchend', endDrag);
-
-    function startDrag(e) {
-        const mouseX = e.clientX || (e.touches && e.touches[0].clientX);
-        const mouseY = e.clientY || (e.touches && e.touches[0].clientY);
-        
-        objects.forEach(obj => {
-            const d = Math.sqrt((obj.x - mouseX)**2 + (obj.y - mouseY)**2);
-            if (d < 30) {
-                draggingObj = obj;
-                obj.isStuck = false;
-                playDragSound();
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
             }
-        });
-    }
 
-    function drag(e) {
-        if (draggingObj) {
-            draggingObj.x = e.clientX || (e.touches && e.touches[0].clientX);
-            draggingObj.y = e.clientY || (e.touches && e.touches[0].clientY);
-            draggingObj.vx = 0;
-            draggingObj.vy = 0;
+            draw() {
+                ctx.font = `${this.size}px serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
         }
-    }
 
-    function endDrag() {
-        draggingObj = null;
-    }
+        function spawn(emoji) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    window.addEventListener('resize', init);
-    init();
-    draw();
+            let x, y;
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) { x = Math.random() * width; y = -50; }
+            else if (side === 1) { x = Math.random() * width; y = height + 50; }
+            else if (side === 2) { x = -50; y = Math.random() * height; }
+            else { x = width + 50; y = Math.random() * height; }
 
-    const whyBtn = document.getElementById('why-though-btn');
-    setTimeout(() => {
-        whyBtn.classList.add('visible');
-    }, 5000);
+            objects.push(new FallingObject(x, y, emoji));
+        }
 
-    whyBtn.addEventListener('click', () => {
-        window.parent.postMessage('playVideo', '*');
-    });
-</script>
+        function resetSim() {
+            objects = [];
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            objects.forEach(obj => {
+                obj.update();
+                obj.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
 </body>
-</html>
 
+</html>
