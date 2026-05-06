@@ -88,6 +88,7 @@
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   }
 </style>
+    <script src="sound_fx.js"></script>
 </head>
 <body>
 
@@ -116,9 +117,28 @@
   // Place cup in kitchen initially
   kitchen.appendChild(cup);
 
+  // Sound effect for interaction
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+  function playDragSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+  }
+
   // Drag and Drop Logic
   cup.addEventListener('dragstart', (e) => {
     setTimeout(() => cup.style.opacity = '0.5', 0);
+    playDragSound();
   });
 
   cup.addEventListener('dragend', (e) => {
@@ -171,3 +191,4 @@
 
 </body>
 </html>
+

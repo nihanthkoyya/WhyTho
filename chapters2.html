@@ -20,6 +20,54 @@
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="CSS/styles.css">
+
+    <style>
+        /* Responsive, single-row Button Toy Styles */
+        .notebook-btn {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 6px solid #b0b0b0;
+            border-radius: 35px;
+            padding: 3vw 2vw;
+            box-shadow: 0 12px 0 #b0b0b0, 0 20px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Crucial for keeping them in 1 row without extending the screen */
+            flex: 1 1 0;
+            min-width: 0;
+            margin: 0;
+            text-align: center;
+            text-decoration: none;
+            color: #2c2c2c;
+        }
+
+        .notebook-btn:hover {
+            color: #0b5ed7;
+            text-decoration: none;
+        }
+
+        .notebook-btn:active {
+            transform: translateY(12px) !important;
+            box-shadow: 0 0 0 #b0b0b0, 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chapter-gif {
+            width: 60%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 20px;
+            margin-bottom: 2vw;
+        }
+
+        .notebook-btn span {
+            line-height: 1.1;
+            /* Font scales dynamically but never gets too huge or too tiny */
+            font-size: clamp(24px, 4vw, 70px) !important;
+        }
+    </style>
 </head>
 
 <body class="chapter-index">
@@ -41,45 +89,45 @@
         </ul>
     </nav>
 
-    <!-- Placeholder title -->
-    <h1 class="lets-go mb-5">Chapter Index</h1>
+    <!-- Centered, Non-wrapping Flex Layout -->
+    <div class="container-fluid d-flex justify-content-center align-items-center"
+        style="min-height: 80vh; padding: 0 4vw; overflow: hidden;">
+        <div class="d-flex flex-nowrap justify-content-center align-items-center w-100" style="gap: 3vw;">
 
-    <!-- Responsive Grid Layout -->
-    <div class="container pb-5 mt-4 pt-lg-5">
-        <div class="row g-5 justify-content-center align-items-center">
-            <!-- Chapter 1 -->
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./heat.html">Heat</a>
-            </div>
-            <!-- Chapter 2 -->
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./why_things_fall.html">Why things fall</a>
-            </div>
-            <!-- Chapter 3 -->
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./current.html">Current</a>
-            </div>
-            <!-- Chapter 4 -->
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./push_pull.html">Push, Pull</a>
-            </div>
-            <!-- Chapter 5 -->
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./energy.html">Energy</a>
-            </div>
+            <!-- Chapter 1: Heat -->
+            <a class="notebook-btn" href="./heat.html">
+                <img src="https://media.tenor.com/sFBubyGnMnYAAAAi/sweating-om-nom.gif" class="chapter-gif" alt="Heat">
+                <span>Heat</span>
+            </a>
 
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./water_cycle.html">Water Cycle</a>
-            </div>
 
-            <div class="col-12 col-md-6 col-lg-4 text-center">
-                <a class="notebook-btn" href="./stuff_around_us.html">Stuff around us
-                </a>
-            </div>
+
+            <!-- Chapter 3: Push, Pull -->
+            <a class="notebook-btn" href="./push_pull.html">
+                <img src="https://media.tenor.com/0X9oRVFTMkAAAAAm/couple-angry.webp" class="chapter-gif"
+                    alt="Push, Pull">
+                <span>Push, Pull</span>
+            </a>
+
+            <!-- Chapter 2: Why things fall -->
+            <a class="notebook-btn" href="./why_things_fall.html">
+                <img src="https://media.tenor.com/4jrT5qI5S5MAAAAM/jagyasini-apple.gif" class="chapter-gif"
+                    alt="Why things fall">
+                <span>Why things fall</span>
+            </a>
 
         </div>
     </div>
 
+    <!-- Keep the satisfying click sounds! -->
+    <script src="sound_fx.js"></script>
+    <script>
+        document.querySelectorAll('.notebook-btn').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                if (window.SoundFX) SoundFX.playClick();
+            });
+        });
+    </script>
 </body>
 
 </html>

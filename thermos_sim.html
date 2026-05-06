@@ -178,6 +178,7 @@
     transform: scale(1.05);
   }
 </style>
+    <script src="sound_fx.js"></script>
 </head>
 <body>
 
@@ -247,10 +248,29 @@
   let cupState = { hasTea: false, temp: 0 };
   let bottleState = { hasTea: false, temp: 0 };
 
+  // Sound effect for interaction
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+  function playDragSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+  }
+
   // --- 1. Drag & Drop Interaction ---
   pitcher.addEventListener('dragstart', (e) => {
     pitcher.style.opacity = '0.7';
     e.dataTransfer.setData('text/plain', 'hot-tea');
+    playDragSound();
   });
   pitcher.addEventListener('dragend', () => pitcher.style.opacity = '1');
 
@@ -276,15 +296,18 @@
       cupState.temp = 100;
       cupLiquid.style.height = '85%';
       cupSteam.style.opacity = '1';
+      if (window.SoundFX) SoundFX.playPour();
     } 
     else if (targetId === 'bottle-dropzone' && !bottleState.hasTea) {
       bottleState.hasTea = true;
       bottleState.temp = 100;
       bottleLiquid.style.height = '85%';
       bottleSteam.style.opacity = '1'; // Brief puff of steam
+      if (window.SoundFX) SoundFX.playPour();
       setTimeout(() => { 
         bottleLid.style.top = '-5px'; // Lid snaps shut!
         bottleSteam.style.opacity = '0'; // Steam gets trapped
+        if (window.SoundFX) SoundFX.playSnap();
       }, 500); 
     }
   }

@@ -214,6 +214,52 @@
             }
         }
 
+        .speech-bubble {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 2px solid #5a4b3c;
+            border-radius: 15px;
+            padding: 8px;
+            font-size: 0.8rem;
+            color: #d32f2f;
+            font-weight: bold;
+            white-space: nowrap;
+            text-align: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #fff transparent transparent transparent;
+            display: block;
+            width: 0;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 11px 11px 0;
+            border-style: solid;
+            border-color: #5a4b3c transparent transparent transparent;
+            display: block;
+            width: 0;
+        }
+
         /* Snowflakes */
         .snowflakes {
             position: absolute;
@@ -244,6 +290,7 @@
             }
         }
     </style>
+    <script src="sound_fx.js"></script>
 </head>
 
 <body>
@@ -277,6 +324,24 @@
     </div>
 
     <script>
+        // Sound effect for interaction
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        function playDragSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
         // Snowflakes generator
         const snowContainer = document.getElementById('snowflakes');
         for (let i = 0; i < 40; i++) {
@@ -310,6 +375,7 @@
             el.style.top = (15 + index * 25) + '%';
 
             el.innerHTML = `
+                <div class="speech-bubble" id="${data.id}-bubble">PLEASE ADD ME BACK TO THE WARM BARN</div>
                 <div class="heat-meter"><div class="heat-fill" id="${data.id}-heat"></div></div>
                 <div class="animal" style="background-image: url('${data.image}')"></div>
             `;
@@ -353,8 +419,23 @@
                 // Shiver effect if freezing
                 if (data.heat === 0) {
                     el.style.transform = `rotate(${Math.random() * 10 - 5}deg) translateX(${Math.random() * 4 - 2}px)`;
+                    if (!data.isShivering) {
+                        data.isShivering = true;
+                        if (window.SoundFX) SoundFX.playShiver();
+                        data.shiverInterval = setInterval(() => { if(window.SoundFX) SoundFX.playShiver(); }, 2000);
+                        if (data.id === 'cat') {
+                            document.getElementById(`${data.id}-bubble`).style.display = 'block';
+                        }
+                    }
                 } else {
                     el.style.transform = '';
+                    if (data.isShivering) {
+                        data.isShivering = false;
+                        clearInterval(data.shiverInterval);
+                        if (data.id === 'cat') {
+                            document.getElementById(`${data.id}-bubble`).style.display = 'none';
+                        }
+                    }
                 }
             });
         }, 100);
@@ -400,6 +481,7 @@
                 if (e.target.closest('.heat-meter')) return;
 
                 e.preventDefault();
+                playDragSound();
 
                 if (isTool) {
                     elmnt.style.top = elmnt.offsetTop + 'px';

@@ -109,6 +109,7 @@
       transform: scale(1.05);
     }
   </style>
+    <script src="sound_fx.js"></script>
 </head>
 
 <body>
@@ -133,6 +134,24 @@
     const ctx = canvas.getContext('2d');
     const meter = document.getElementById('dragMeter');
     const successText = document.getElementById('successText');
+
+    // Sound effect for interaction
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    function playDragSound() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
 
     // Simulation State
     let dragValue = 100;
@@ -235,6 +254,7 @@
           p.attached = false;
           canvas.setPointerCapture(e.pointerId); // Locks pointer to canvas even if dragged outside
           canvas.style.cursor = 'grabbing';
+          playDragSound();
         }
       });
     });
@@ -266,6 +286,7 @@
           draggedPart.attached = true;
           draggedPart.x = draggedPart.targetX;
           draggedPart.y = draggedPart.targetY;
+          if (window.SoundFX) SoundFX.playSnap();
         } else {
           draggedPart.x = draggedPart.startX;
           draggedPart.y = draggedPart.startY;
@@ -290,6 +311,12 @@
       meter.style.width = `${dragValue}%`;
       meter.style.background = dragValue <= GOAL ? '#10b981' : (dragValue < 70 ? '#f59e0b' : '#ef4444');
       successText.textContent = dragValue <= GOAL ? 'SPEED GOAL REACHED!' : '';
+
+      if (dragValue <= GOAL && !window.hasWon) {
+          window.hasWon = true;
+          if (window.SoundFX) SoundFX.playSuccess();
+      }
+      if (dragValue > GOAL) window.hasWon = false;
 
       particles.forEach(p => { p.update(); p.draw(ctx); });
 
@@ -361,3 +388,6 @@
 </body>
 
 </html>
+
+
+

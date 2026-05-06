@@ -226,6 +226,7 @@
       transform: scale(1.05);
     }
   </style>
+    <script src="sound_fx.js"></script>
 </head>
 
 <body>
@@ -272,10 +273,29 @@
 
     let temperatureChecked = false;
 
+    // Sound effect for interaction
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    function playDragSound() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
     // 1. Drag Start
     thermometer.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('text/plain', 'thermometer');
       setTimeout(() => { thermometer.style.opacity = '0.5'; }, 0);
+      playDragSound();
     });
 
     // Drag End
@@ -319,6 +339,7 @@
           statusText.style.color = "#d32f2f";
           statusText.innerText = "Oh no! 102°F - He has a fever! 🌡️🔥";
           document.getElementById('why-though-btn').style.display = 'block';
+          if (window.SoundFX) SoundFX.playAlarm();
         }, 1500); // Wait for liquid to rise before updating text
 
       }, 500);
@@ -342,3 +363,4 @@
 </body>
 
 </html>
+

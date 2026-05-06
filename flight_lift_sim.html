@@ -106,6 +106,7 @@
             transform: scale(1.05);
         }
     </style>
+    <script src="sound_fx.js"></script>
 </head>
 
 <body>
@@ -254,6 +255,7 @@
             engineOn = !engineOn;
             engineBtn.classList.toggle('active');
             engineBtn.innerText = engineOn ? "Stop Engine" : "Start Engine";
+            if (engineOn && window.SoundFX) SoundFX.playWoosh();
         });
 
         window.addEventListener('resize', init);
@@ -272,3 +274,4 @@
 </body>
 
 </html>
+

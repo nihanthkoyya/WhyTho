@@ -74,6 +74,7 @@
     transform: scale(1.05);
   }
 </style>
+    <script src="sound_fx.js"></script>
 </head>
 <body>
 
@@ -211,6 +212,7 @@
       state.velocity = state.force * 0.15; // Velocity proportional to force
       slider.value = 0;
       slider.disabled = true;
+      if (window.SoundFX) SoundFX.playSnap();
     }
   });
 
@@ -234,3 +236,5 @@
 </script>
 </body>
 </html>
+
+
