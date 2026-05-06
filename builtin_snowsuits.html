@@ -324,21 +324,30 @@
 
     <script>
         // Sound effect for interaction
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+        let audioCtx;
         function playDragSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            try {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass) audioCtx = new AudioContextClass();
+                }
+                if (!audioCtx) return;
+
+                if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { });
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {
+                console.warn("Audio play failed:", e);
+            }
         }
 
         // Snowflakes generator
@@ -420,8 +429,8 @@
                     el.style.transform = `rotate(${Math.random() * 10 - 5}deg) translateX(${Math.random() * 4 - 2}px)`;
                     if (!data.isShivering) {
                         data.isShivering = true;
-                        if (window.SoundFX) SoundFX.playShiver();
-                        data.shiverInterval = setInterval(() => { if (window.SoundFX) SoundFX.playShiver(); }, 2000);
+                        try { if (window.SoundFX) SoundFX.playShiver(); } catch (e) { console.warn("Audio play failed:", e); }
+                        data.shiverInterval = setInterval(() => { try { if (window.SoundFX) SoundFX.playShiver(); } catch (e) { } }, 2000);
                         if (data.id === 'cat') {
                             document.getElementById(`${data.id}-bubble`).style.display = 'block';
                         }

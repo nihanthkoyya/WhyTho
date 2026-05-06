@@ -1,26 +1,21 @@
-import urllib.request
-import re
+import os
+import glob
 
-url = 'https://drive.google.com/drive/folders/1aPEC8VXQ0XFSnTT28lpADPvyFvifsd4P?usp=sharing'
-req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-try:
-    html = urllib.request.urlopen(req).read().decode('utf-8')
-    # Find names
-    names = re.findall(r'"([^"]+\.mp4)"', html)
-    print('Found mp4 names:', set(names))
-    
-    # Try to find IDs associated with names
-    # Usually it's ["ID", "Name", ... ] or similar
-    # Let's extract all long strings that look like Google Drive IDs
-    # Drive IDs are typically 33 characters, base64-like
-    # But let's look for combinations of ID and .mp4
-    matches = re.findall(r'\["([a-zA-Z0-9_-]{28,35})","([^"]+\.mp4)"', html)
-    if not matches:
-        matches = re.findall(r'"([a-zA-Z0-9_-]{28,35})","([^"]+\.mp4)"', html)
-    
-    print("Found Matches:")
-    for m in set(matches):
-        print(f"ID: {m[0]}, Name: {m[1]}")
+# add allow="autoplay" to all iframes
+directory = "c:/Users/hemad/OneDrive/Desktop/WhyTho"
+html_files = glob.glob(os.path.join(directory, "*.html"))
 
-except Exception as e:
-    print('Error:', e)
+for file_path in html_files:
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    if '<iframe' in content:
+        # replace <iframe with <iframe allow="autoplay" if it doesn't have it
+        # Actually a safer way is to replace 'allowfullscreen>' with 'allowfullscreen allow="autoplay">'
+        # Let's do that
+        new_content = content.replace('allowfullscreen>', 'allowfullscreen allow="autoplay">')
+        if new_content != content:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            print(f"Updated {os.path.basename(file_path)}")
+
