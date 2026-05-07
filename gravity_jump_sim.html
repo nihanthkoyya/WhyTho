@@ -184,6 +184,12 @@
         window.onresize = init;
         init();
         draw();
+
+        // Trigger parent library to play the associated video
+        document.getElementById('why').addEventListener('click', () => {
+            window.parent.postMessage('playVideo', '*');
+        });
+
     </script>
 </body>
 

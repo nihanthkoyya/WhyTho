@@ -163,7 +163,6 @@
             earthRadius = (height * 0.9) / 2.3;
         }
 
-        // Sound Engine
         function playFallSound() {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -171,7 +170,7 @@
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1);
 
-            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Max Volume
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
 
             osc.connect(gain);
@@ -187,7 +186,7 @@
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
 
-            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Max Volume
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
 
             osc.connect(gain);
@@ -258,6 +257,11 @@
             });
             requestAnimationFrame(animate);
         }
+
+        // Trigger parent library to play the associated video
+        document.getElementById('why-btn').addEventListener('click', () => {
+            window.parent.postMessage('playVideo', '*');
+        });
 
         window.addEventListener('resize', init);
         init();
